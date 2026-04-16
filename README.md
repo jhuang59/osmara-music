@@ -8,4 +8,4 @@ A simple landing page that plays music when visitors arrive via an NFC tag scan.
 - `cover.svg` — the cover art (replace with your own art)
 
 ## Deployed at
-https://YOUR-USERNAME.github.io/nfc-demo/
+[https://jhuang59.github.io/osmara-music/](https://jhuang59.github.io/osmara-music/)
