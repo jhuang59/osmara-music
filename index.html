@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>drift — Your Brand</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a0a14;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(196,77,212,0.25) 0%, transparent 70%);
+      filter: blur(40px);
+      z-index: 0;
+      animation: pulse 6s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+      50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+    }
+    .card {
+      max-width: 380px;
+      width: 100%;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+    .cover {
+      width: 260px;
+      height: 260px;
+      margin: 0 auto 32px;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(196,77,212,0.4);
+      transition: transform 0.3s ease;
+    }
+    .cover.playing {
+      animation: spin 20s linear infinite;
+      border-radius: 50%;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .cover img { width: 100%; height: 100%; display: block; }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 6px;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+    }
+    .artist {
+      color: #888;
+      margin-bottom: 32px;
+      font-size: 15px;
+    }
+    .player {
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .play-btn {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: #fff;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      transition: transform 0.15s ease;
+    }
+    .play-btn:active { transform: scale(0.95); }
+    .play-btn svg { width: 28px; height: 28px; fill: #0a0a14; margin-left: 2px; }
+    .play-btn.playing svg { margin-left: 0; }
+    .progress {
+      width: 100%;
+      height: 4px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #ff6b9d, #c44dd4);
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+    .times {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #888;
+      font-variant-numeric: tabular-nums;
+    }
+    .story {
+      color: #aaa;
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 24px;
+      font-style: italic;
+    }
+    .links {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+    }
+    .links a {
+      color: #c44dd4;
+      text-decoration: none;
+      font-size: 13px;
+      padding: 8px 16px;
+      border: 1px solid rgba(196,77,212,0.3);
+      border-radius: 20px;
+      transition: all 0.2s ease;
+    }
+    .links a:hover { background: rgba(196,77,212,0.1); }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="cover" id="cover">
+      <img src="cover.svg" alt="drift cover">
+    </div>
+    <h1>drift</h1>
+    <p class="artist">Your Brand</p>
+
+    <div class="player">
+      <button class="play-btn" id="playBtn">
+        <svg viewBox="0 0 24 24" id="playIcon"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <div class="progress" id="progress">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <div class="times">
+        <span id="current">0:00</span>
+        <span id="total">0:20</span>
+      </div>
+    </div>
+
+    <p class="story">
+      A sound made just for you. Scan, listen, drift away.
+    </p>
+
+    <div class="links">
+      <a href="#">Visit site</a>
+      <a href="#">Follow</a>
+    </div>
+  </div>
+
+  <audio id="audio" preload="auto">
+    <source src="track.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+    const audio = document.getElementById('audio');
+    const playBtn = document.getElementById('playBtn');
+    const playIcon = document.getElementById('playIcon');
+    const progressBar = document.getElementById('progressBar');
+    const progress = document.getElementById('progress');
+    const current = document.getElementById('current');
+    const total = document.getElementById('total');
+    const cover = document.getElementById('cover');
+
+    const playSVG = '<path d="M8 5v14l11-7z"/>';
+    const pauseSVG = '<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>';
+
+    function fmt(s) {
+      const m = Math.floor(s / 60);
+      const sec = Math.floor(s % 60).toString().padStart(2, '0');
+      return m + ':' + sec;
+    }
+
+    playBtn.addEventListener('click', () => {
+      if (audio.paused) audio.play();
+      else audio.pause();
+    });
+
+    audio.addEventListener('play', () => {
+      playIcon.innerHTML = pauseSVG;
+      playBtn.classList.add('playing');
+      cover.classList.add('playing');
+    });
+
+    audio.addEventListener('pause', () => {
+      playIcon.innerHTML = playSVG;
+      playBtn.classList.remove('playing');
+      cover.classList.remove('playing');
+    });
+
+    audio.addEventListener('timeupdate', () => {
+      const pct = (audio.currentTime / audio.duration) * 100;
+      progressBar.style.width = pct + '%';
+      current.textContent = fmt(audio.currentTime);
+    });
+
+    audio.addEventListener('loadedmetadata', () => {
+      total.textContent = fmt(audio.duration);
+    });
+
+    audio.addEventListener('ended', () => {
+      audio.currentTime = 0;
+      progressBar.style.width = '0%';
+    });
+
+    progress.addEventListener('click', (e) => {
+      const rect = progress.getBoundingClientRect();
+      const pct = (e.clientX - rect.left) / rect.width;
+      audio.currentTime = pct * audio.duration;
+    });
+  </script>
+</body>
+</html>
